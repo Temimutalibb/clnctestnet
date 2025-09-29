@@ -13,7 +13,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const client = new SuiClient({ url: getFullnodeUrl("testnet") });
+const client = new SuiClient({ url: getFullnodeUrl("devnet") });
 
 // Create Sui client and server keypair
 const fullKey = Uint8Array.from(
@@ -39,7 +39,6 @@ app.post("/withdraw", async (req, res) => {
     }
 
     const suiAmount = amount * 1000000; // 100_000_000
-    console.log(suiAmount);
 
     // Step 2: Create transaction
     const tx = new TransactionBlock();
