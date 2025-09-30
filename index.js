@@ -1,6 +1,7 @@
 import { SuiClient, getFullnodeUrl } from "@mysten/sui.js/client";
 import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
 import { TransactionBlock } from "@mysten/sui.js/transactions";
+import { decodeSuiPrivateKey } from "@mysten/sui.js/cryptography";
 import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -16,12 +17,14 @@ app.use(bodyParser.json());
 const client = new SuiClient({ url: getFullnodeUrl("mainnet") });
 
 // Create Sui client and server keypair
-const fullKey = Uint8Array.from(
+/*const fullKey = Uint8Array.from(
   Buffer.from(process.env.SUI_PRIVATE_KEY, "base64")
 );
-
-const rawSecretKey = fullKey.slice(1);
-const keypair = Ed25519Keypair.fromSecretKey(rawSecretKey);
+*/
+const {secretKey} = decodeSuiPrivateKey(process.env.SUI_PRIVATE_KEY);
+//const rawSecretKey = fullKey.slice(1);
+//const keypair = Ed25519Keypair.fromSecretKey(rawSecretKey);
+const keypair = Ed25519Keypair.fromSecretKey(secretKey);
 const treasuryCoinId = process.env.TREASURY_COIN_OBJECT_ID;
 
 app.get("/", (req, res) => {
@@ -39,7 +42,6 @@ app.post("/withdraw", async (req, res) => {
     }
 
     const suiAmount = amount * 1000000; // 100_000_000
-
     // Step 2: Create transaction
     const tx = new TransactionBlock();
 
@@ -62,6 +64,7 @@ app.post("/withdraw", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Withdrawal failed" });
+    console.log(error.message);
   }
 });
 
