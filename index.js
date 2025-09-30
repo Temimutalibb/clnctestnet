@@ -13,7 +13,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const client = new SuiClient({ url: getFullnodeUrl("devnet") });
+const client = new SuiClient({ url: getFullnodeUrl("mainnet") });
 
 // Create Sui client and server keypair
 const fullKey = Uint8Array.from(
