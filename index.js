@@ -24,6 +24,7 @@ const serviceAccount = JSON.parse(
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://clancircle-ecf0b-default-rtdb.firebaseio.com"
 });
 
 const app = express();
