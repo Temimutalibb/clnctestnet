@@ -17,8 +17,9 @@ if (!process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
     "FIREBASE_SERVICE_ACCOUNT_BASE64 is not set in the environment variables."
   );
 }
+const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64.replace(/(\r\n|\n|\r)/gm, "");
 const serviceAccount = JSON.parse(
-  Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, "base64").toString("ascii")
+  Buffer.from(serviceAccountJson, "base64").toString("ascii")
 );
 
 admin.initializeApp({
