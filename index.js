@@ -6,9 +6,24 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import admin from "firebase-admin";
 
 // Load .env variables
 dotenv.config();
+
+// Initialize Firebase Admin SDK
+if (!process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
+  throw new Error(
+    "FIREBASE_SERVICE_ACCOUNT_BASE64 is not set in the environment variables."
+  );
+}
+const serviceAccount = JSON.parse(
+  Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, "base64").toString("ascii")
+);
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 const app = express();
 app.use(cors());
@@ -21,7 +36,7 @@ const client = new SuiClient({ url: getFullnodeUrl("mainnet") });
   Buffer.from(process.env.SUI_PRIVATE_KEY, "base64")
 );
 */
-const {secretKey} = decodeSuiPrivateKey(process.env.SUI_PRIVATE_KEY);
+const { secretKey } = decodeSuiPrivateKey(process.env.SUI_PRIVATE_KEY);
 //const rawSecretKey = fullKey.slice(1);
 //const keypair = Ed25519Keypair.fromSecretKey(rawSecretKey);
 const keypair = Ed25519Keypair.fromSecretKey(secretKey);
@@ -31,8 +46,32 @@ app.get("/", (req, res) => {
   res.send("Hello World!  ");
 });
 
-app.post("/withdraw", async (req, res) => {
+// Authentication middleware
+const authenticate = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Unauthorized: No token provided" });
+  }
+
+  const idToken = authHeader.split("Bearer ")[1];
+
   try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    req.user = decodedToken; // Add user info to the request object
+    next();
+  } catch (error) {
+    console.error("Error verifying auth token:", error);
+    return res.status(403).json({ error: "Forbidden: Invalid token" });
+  }
+};
+
+app.post("/withdraw", authenticate, async (req, res) => {
+  try {
+    // The user is now authenticated and req.user contains their details
+    // You can add extra checks here, e.g., if req.user.uid is allowed to withdraw.
+    console.log(`Withdrawal request from authorized user: ${req.user.uid}`);
+
     const { amount, recipient } = req.body;
 
     if (!amount || !recipient) {
